@@ -1,8 +1,5 @@
 from gym.envs.registration import registry, register, make, spec
 
-# Make sure that deprecated environments are still registered.
-import gym.envs.deprecated
-
 # Algorithmic
 # ----------------------------------------
 
@@ -57,13 +54,14 @@ register(
     id='CartPole-v0',
     entry_point='gym.envs.classic_control:CartPoleEnv',
     timestep_limit=200,
-    reward_threshold=195,
+    reward_threshold=195.0,
 )
 
 register(
     id='MountainCar-v0',
     entry_point='gym.envs.classic_control:MountainCarEnv',
     timestep_limit=200,
+    reward_threshold=-110.0,
 )
 
 register(
@@ -83,24 +81,24 @@ register(
 # ----------------------------------------
 
 register(
-    id='LunarLander-v0',
+    id='LunarLander-v1',
     entry_point='gym.envs.box2d:LunarLander',
-    timestep_limit=300,
-    reward_threshold=1,
+    timestep_limit=1000,
+    reward_threshold=200,
 )
 
 register(
-    id='BipedalWalker-v0',
+    id='BipedalWalker-v1',
     entry_point='gym.envs.box2d:BipedalWalker',
-    timestep_limit=1000,
-    reward_threshold=1.5,
+    timestep_limit=1600,
+    reward_threshold=300,
 )
 
 register(
-    id='BipedalWalkerHardcore-v0',
+    id='BipedalWalkerHardcore-v1',
     entry_point='gym.envs.box2d:BipedalWalkerHardcore',
-    timestep_limit=1000,
-    reward_threshold=1.5,
+    timestep_limit=2000,
+    reward_threshold=300,
 )
 
 # Toy Text
@@ -116,6 +114,7 @@ register(
     entry_point='gym.envs.toy_text:FrozenLakeEnv',
     kwargs={'map_name' : '4x4'},
     timestep_limit=100,
+    reward_threshold=0.78, # optimum = .8196
 )
 
 register(
@@ -123,6 +122,7 @@ register(
     entry_point='gym.envs.toy_text:FrozenLakeEnv',
     kwargs={'map_name' : '8x8'},
     timestep_limit=200,
+    reward_threshold=0.99, # optimum = 1
 )
 
 register(
@@ -141,6 +141,7 @@ register(
     id='Taxi-v1',
     entry_point='gym.envs.toy_text.taxi:TaxiEnv',
     timestep_limit=200,
+    reward_threshold=9.7, # optimum = 10.2
 )
 
 # Mujoco
@@ -167,16 +168,19 @@ register(
 register(
     id='HalfCheetah-v1',
     entry_point='gym.envs.mujoco:HalfCheetahEnv',
+    reward_threshold=4800.0,
 )
 
 register(
     id='Hopper-v1',
     entry_point='gym.envs.mujoco:HopperEnv',
+    reward_threshold=3800.0,
 )
 
 register(
     id='Swimmer-v1',
     entry_point='gym.envs.mujoco:SwimmerEnv',
+    reward_threshold=360.0,
 )
 
 register(
@@ -187,6 +191,7 @@ register(
 register(
     id='Ant-v1',
     entry_point='gym.envs.mujoco:AntEnv',
+    reward_threshold=6000.0,
 )
 
 register(
@@ -256,4 +261,52 @@ register(
         'illegal_move_mode': 'lose',
         'board_size': 9,
     },
+)
+
+# Doom
+# ----------------------------------------
+
+register(
+    id='DoomBasic-v0',
+    entry_point='gym.envs.doom:DoomBasicEnv',
+)
+
+register(
+    id='DoomCorridor-v0',
+    entry_point='gym.envs.doom:DoomCorridorEnv',
+)
+
+register(
+    id='DoomDefendCenter-v0',
+    entry_point='gym.envs.doom:DoomDefendCenterEnv',
+)
+
+register(
+    id='DoomDefendLine-v0',
+    entry_point='gym.envs.doom:DoomDefendLineEnv',
+)
+
+register(
+    id='DoomHealthGathering-v0',
+    entry_point='gym.envs.doom:DoomHealthGatheringEnv',
+)
+
+register(
+    id='DoomMyWayHome-v0',
+    entry_point='gym.envs.doom:DoomMyWayHomeEnv',
+)
+
+register(
+    id='DoomPredictPosition-v0',
+    entry_point='gym.envs.doom:DoomPredictPositionEnv',
+)
+
+register(
+    id='DoomTakeCover-v0',
+    entry_point='gym.envs.doom:DoomTakeCoverEnv',
+)
+
+register(
+    id='DoomDeathmatch-v0',
+    entry_point='gym.envs.doom:DoomDeathmatchEnv',
 )

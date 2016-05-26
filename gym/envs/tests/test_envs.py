@@ -5,18 +5,15 @@ import os
 import logging
 logger = logging.getLogger(__name__)
 
+import gym
 from gym import envs
 
 # This runs a smoketest on each official registered env. We may want
 # to try also running environments which are not officially registered
 # envs.
-specs = [spec for spec in envs.registry.all()]
+specs = [spec for spec in envs.registry.all() if spec._entry_point is not None]
 @tools.params(*specs)
 def test_env(spec):
-    # Skip for deprecated envs
-    if spec._entry_point is None:
-        return
-
     # Skip mujoco tests for pull request CI
     skip_mujoco = os.environ.get('TRAVIS_PULL_REQUEST', 'false') != 'false'
     if skip_mujoco and spec._entry_point.startswith('gym.envs.mujoco:'):
@@ -38,7 +35,12 @@ def test_env(spec):
     assert np.isscalar(reward), "{} is not a scalar for {}".format(reward, env)
     assert isinstance(done, bool), "Expected {} to be a boolean".format(done)
 
-    for mode in env.metadata.get('render.modes'):
+    for mode in env.metadata.get('render.modes', []):
+        env.render(mode=mode)
+    env.render(close=True)
+
+    # Make sure we can render the environment after close.
+    for mode in env.metadata.get('render.modes', []):
         env.render(mode=mode)
     env.render(close=True)
 
@@ -53,3 +55,18 @@ def test_random_rollout():
             assert env.action_space.contains(a)
             (ob, _reward, done, _info) = env.step(a)
             if done: break
+
+def test_double_close():
+    class TestEnv(gym.Env):
+        def __init__(self):
+            self.close_count = 0
+
+        def _close(self):
+            self.close_count += 1
+
+    env = TestEnv()
+    assert env.close_count == 0
+    env.close()
+    assert env.close_count == 1
+    env.close()
+    assert env.close_count == 1

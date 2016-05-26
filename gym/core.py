@@ -4,6 +4,7 @@ logger = logging.getLogger(__name__)
 import numpy as np
 
 from gym import error, monitoring
+from gym.utils.atexit_utils import env_closer
 
 # Env-related abstractions
 
@@ -17,6 +18,7 @@ class Env(object):
         reset
         step
         render
+        close
 
     When implementing an environment, override the following methods
     in your subclass:
@@ -40,6 +42,10 @@ class Env(object):
     metadata = {'render.modes': []}
     reward_range = (-np.inf, np.inf)
 
+    # Override in SOME subclasses
+    def _close(self):
+        pass
+
     # Set these in ALL subclasses
     action_space = None
     observation_space = None
@@ -55,6 +61,8 @@ class Env(object):
     # Will be automatically set when creating an environment via
     # 'make'.
     spec = None
+    _close_called = False
+    _env_exit_id = None
 
     @property
     def monitor(self):
@@ -81,8 +89,7 @@ class Env(object):
         info (dict): contains auxiliary diagnostic information (helpful for debugging, and sometimes learning)
         """
         if not self.action_space.contains(action):
-            hint = self.action_space.sample()
-            logger.warn("Action '{}' is not contained within action space '{}'. HINT: Try using a value like '{}' instead.".format(action, self.action_space, hint))
+            logger.warn("Action '{}' is not contained within action space '{}'.".format(action, self.action_space))
 
         self.monitor._before_step(action)
         observation, reward, done, info = self._step(action)
@@ -154,6 +161,21 @@ class Env(object):
             raise error.UnsupportedMode('Unsupported rendering mode: {}. (Supported modes for {}: {})'.format(mode, self, modes))
 
         return self._render(mode=mode, close=close)
+
+    def close(self):
+        """Environments will automatically close() themselves when garbage collected (via
+        __del__) or when the program exits (via env_closer's atexit behavior).
+        Override _close in your subclass to perform any necessary cleanup.
+        """
+        if not self._close_called:
+            self._close()
+            env_closer.unregister(self._env_exit_id)
+            # N.B. you might still get a double close() if an error happens
+            # before we set _close_called, but this is probably good for now.
+            self._close_called = True
+
+    def __del__(self):
+        self.close()
 
     def __str__(self):
         return '<{} instance>'.format(type(self).__name__)

@@ -3,6 +3,7 @@ import pkg_resources
 import re
 import sys
 from gym import error
+from gym.utils.atexit_utils import env_closer
 
 logger = logging.getLogger(__name__)
 # This format is true today, but it's *not* an official spec.
@@ -43,6 +44,7 @@ class EnvSpec(object):
         match = env_id_re.search(id)
         if not match:
             raise error.Error('Attempted to register malformed environment ID: {}. (Currently all IDs must be of the form {}.)'.format(id, env_id_re.pattern))
+        self._env_name = match.group(1)
         self._entry_point = entry_point
         self._kwargs = {} if kwargs is None else kwargs
 
@@ -56,6 +58,9 @@ class EnvSpec(object):
 
         # Make the enviroment aware of which spec it came from.
         env.spec = self
+        # Register the env for atexit
+        env._close_called = False
+        env._env_exit_id = env_closer.register(env)
         return env
 
     def __repr__(self):
@@ -89,7 +94,15 @@ class EnvRegistry(object):
         try:
             return self.env_specs[id]
         except KeyError:
-            raise error.UnregisteredEnv('No registered env with id: {}'.format(id))
+            # Parse the env name and check to see if it matches the non-version
+            # part of a valid env (could also check the exact number here)
+            env_name = match.group(1)
+            matching_envs = [valid_env_name for valid_env_name, valid_env_spec in self.env_specs.items()
+                             if env_name == valid_env_spec._env_name]
+            if matching_envs:
+                raise error.DeprecatedEnv('Env {} not found (valid versions include {})'.format(id, matching_envs))
+            else:
+                raise error.UnregisteredEnv('No registered env with id: {}'.format(id))
 
     def register(self, id, **kwargs):
         if id in self.env_specs:
